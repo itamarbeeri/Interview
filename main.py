@@ -3,6 +3,7 @@ import os
 import cv2
 import numpy as np
 import yaml
+from solution_online import VideoStabilizer
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -31,9 +32,13 @@ def main():
     config = yaml.safe_load(open(os.path.join(ROOT_DIR, "config.yml")))
     frame_loader = FrameLoader(os.path.join(ROOT_DIR, config['video_dir_relative'], config['video_name']))
 
+    ret, frame = frame_loader.get_frame()
+    video_stabilizer = VideoStabilizer(frame)
+    display_frames(frame, frame)
     while True:
         ret, frame = frame_loader.get_frame()
-        display_frames(frame, frame)
+        stabilized_frame = video_stabilizer(frame)
+        display_frames(frame, stabilized_frame)
 
 
 if __name__ == '__main__':

@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 from tqdm import tqdm
 
+
 def stabilize_video(input_path, output_path, smoothing_radius=30, damping=0.5):
     """
     Stabilizes a video using feature detection and motion tracking.
