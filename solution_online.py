@@ -3,7 +3,7 @@ import numpy as np
 
 
 class VideoStabilizer:
-    def __init__(self, frame:np.ndarray, damping:float=0.5, border:int=100, alpha:float=0.9):
+    def __init__(self, frame:np.ndarray, damping:float=0.5, border:int=100, alpha:float=0.05):
         """
         Initializes the Stabilizer with the given parameters.
         Args:
@@ -34,6 +34,8 @@ class VideoStabilizer:
         self.prev_frame = frame
         self.prev_gray = cv2.cvtColor(self.prev_frame, cv2.COLOR_BGR2GRAY)
         self.moving_avg = None
+        self.history = []
+        self.total_history = []
         self.alpha = alpha
 
     def smooth_trajectory(self, trajectory):
@@ -92,37 +94,50 @@ class VideoStabilizer:
             m = np.eye(2, 3, dtype=np.float32)
             
         
-        self.prev_frame = curr_frame.copy()
-        self.prev_gray = curr_gray.copy()
-
         trajectory = np.zeros((1, 3), dtype=np.float32)
         trajectory[0, 0] = m[0, 2]  # x translation
         trajectory[0, 1] = m[1, 2]  # y translation
         trajectory[0, 2] = np.arctan2(m[1, 0], m[0, 0])
         
+        # Check if the trajectory is very far from the smoothed trajectory
+        
+        if len(self.history) >30:
+            recent_trajectories = np.array(self.history[-30:])
+            mean_trajectory = np.mean(recent_trajectories, axis=0)
+            std_trajectory = np.std(recent_trajectories, axis=0)
+            
+            z_score = np.abs((trajectory - mean_trajectory) / std_trajectory)
+            
+            if np.any(z_score > 3):  # If any component of the trajectory is more than 3 standard deviations away
+                trajectory = mean_trajectory  # Use the mean trajectory instead
+            else:
+                self.history.append(trajectory)
+        else:
+            self.history.append(trajectory)
+        self.total_history.append(trajectory)
         smoothed_trajectory = self.smooth_trajectory(trajectory)
 
-        dx = self.damping * (smoothed_trajectory[0, 0] - trajectory[0, 0])
-        dy = self.damping * (smoothed_trajectory[0, 1] - trajectory[0, 1])
-        da = self.damping * (smoothed_trajectory[0, 2] - trajectory[0, 2])
+        dx = smoothed_trajectory[0, 0]
+        dy = smoothed_trajectory[0, 1]
+        da = smoothed_trajectory[0, 2]
 
         rot_matrix = cv2.getRotationMatrix2D((0, 0), np.degrees(da), 1.0)
 
         corrected_transform = np.zeros((2, 3), dtype=np.float32)
         # Apply rotation
-        corrected_transform[0, 0] = rot_matrix[0, 0] * m[0, 0] + rot_matrix[0, 1] * m[1, 0]
-        corrected_transform[0, 1] = rot_matrix[0, 0] * m[0, 1] + rot_matrix[0, 1] * m[1, 1]
-        corrected_transform[1, 0] = rot_matrix[1, 0] * m[0, 0] + rot_matrix[1, 1] * m[1, 0]
-        corrected_transform[1, 1] = rot_matrix[1, 0] * m[0, 1] + rot_matrix[1, 1] * m[1, 1]
+        corrected_transform[0, 0] = rot_matrix[0, 0]
+        corrected_transform[0, 1] = rot_matrix[0, 1]
+        corrected_transform[1, 0] = rot_matrix[1, 0]
+        corrected_transform[1, 1] = rot_matrix[1, 1]
         
-        # Apply translation (original + correction)
-        corrected_transform[0, 2] = rot_matrix[0, 0] * m[0, 2] + rot_matrix[0, 1] * m[1, 2] + rot_matrix[0, 2] + dx
-        corrected_transform[1, 2] = rot_matrix[1, 0] * m[0, 2] + rot_matrix[1, 1] * m[1, 2] + rot_matrix[1, 2] + dy
+        # # Apply translation (original + correction)
+        corrected_transform[0, 2] = dx
+        corrected_transform[1, 2] = dy
         
         
         stabilized_frame = cv2.warpAffine(curr_frame, corrected_transform, (self.width, self.height))
 
         
-        stabilized_frame = self.fix_border(stabilized_frame, self.border)
+        # stabilized_frame = self.fix_border(stabilized_frame, self.border)
         return stabilized_frame
 
