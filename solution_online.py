@@ -99,21 +99,21 @@ class VideoStabilizer:
         trajectory[0, 1] = m[1, 2]  # y translation
         trajectory[0, 2] = np.arctan2(m[1, 0], m[0, 0])
         
-        # Check if the trajectory is very far from the smoothed trajectory
-        
-        if len(self.history) >30:
+        # Check if the trajectory is out of distribution
+        if len(self.history) > 30:
             recent_trajectories = np.array(self.history[-30:])
             mean_trajectory = np.mean(recent_trajectories, axis=0)
             std_trajectory = np.std(recent_trajectories, axis=0)
             
             z_score = np.abs((trajectory - mean_trajectory) / std_trajectory)
             
-            if np.any(z_score > 3):  # If any component of the trajectory is more than 3 standard deviations away
+            if np.any(z_score > 3):  # reject the trajectory if it 3 stds from the mean
                 trajectory = mean_trajectory  # Use the mean trajectory instead
             else:
                 self.history.append(trajectory)
         else:
             self.history.append(trajectory)
+
         self.total_history.append(trajectory)
         smoothed_trajectory = self.smooth_trajectory(trajectory)
 
@@ -124,17 +124,14 @@ class VideoStabilizer:
         rot_matrix = cv2.getRotationMatrix2D((0, 0), np.degrees(da), 1.0)
 
         corrected_transform = np.zeros((2, 3), dtype=np.float32)
-        # Apply rotation
-        corrected_transform[0, 0] = rot_matrix[0, 0]
-        corrected_transform[0, 1] = rot_matrix[0, 1]
-        corrected_transform[1, 0] = rot_matrix[1, 0]
-        corrected_transform[1, 1] = rot_matrix[1, 1]
+        # Add rotation
+        corrected_transform = rot_matrix
         
-        # # Apply translation (original + correction)
+        # add translations 
         corrected_transform[0, 2] = dx
-        corrected_transform[1, 2] = dy
+        corrected_transform[1, 2] = dy      
         
-        
+        # Apply the transformation to the current frame
         stabilized_frame = cv2.warpAffine(curr_frame, corrected_transform, (self.width, self.height))
 
         
