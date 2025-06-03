@@ -25,6 +25,8 @@ Good luck!
 
 # How To run:
 
+    configure your "data" folder inside root with mp4 videos to stabilize 
+
     poetry install  
 
     poetry run python main.py
