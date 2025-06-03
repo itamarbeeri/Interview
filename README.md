@@ -23,15 +23,20 @@ Good luck!
 
 
 
-# How To run:
 
-    configure your "data" folder inside root with mp4 videos to stabilize 
 
-    poetry install  
+## How To run:
 
-    poetry run python main.py
+Configure your `data` folder inside the root with MP4 videos to stabilize.
 
-    This will run the stabilizer on your configured input video and save the stabilized output alongside the original for comparison
+```bash
+poetry install
+
+poetry run python main.py
+```
+
+This will run the stabilizer on your configured input video and save the stabilized output alongside the original for comparison.
+
 
 # General thougths and approach: 
 ## Why I Went with This Method
