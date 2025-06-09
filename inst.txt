@@ -1,0 +1,2 @@
+to run, install the requirements.r file. then run in the prompt:
+sagi.py input_file output_file --roi x y w h
