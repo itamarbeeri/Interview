@@ -1,17 +1,15 @@
 stabilization:
-  smoothing_radius: 50
-  correction_boost: 1.0  # strength of correction applied to motion
-  angle_smoothing: true # whether to smooth rotation angle
+  prediction_window_size: 50
+  polynomial_prediction_order: 1
   min_tracked_features: 20
-  bidirectional_max_error: 1.0  # optical flow forward-backward error threshold 
   output_fps: 30.0
   output_codec: "mp4v"
   border_mode: "constant"
 
   good_features_to_track:
     max_corners: 500  # maximum number of features to track 
-    quality_level: 0.001 # feature quality threshold — lower finds more 
-    min_distance: 5 # minimum distance between features
+    quality_level: 0.01 # feature quality threshold — lower finds more 
+    min_distance: 3 # minimum distance between features
 
   frame_labels:
     original: "original video"
@@ -19,4 +17,4 @@ stabilization:
 
 video_dir_relative: "data"
 video_name: "shaky_video.mp4"
-output_name: "stabilized_output.mp4" 
+output_name: "stabilized_output_frame1.mp4" 
