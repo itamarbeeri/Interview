@@ -1,2 +1,20 @@
-video_dir_relative: 'data'
-video_name: 'car.mp4'
+stabilization:
+  prediction_window_size: 50
+  polynomial_prediction_order: 1
+  min_tracked_features: 20
+  output_fps: 30.0
+  output_codec: "mp4v"
+  border_mode: "constant"
+
+  good_features_to_track:
+    max_corners: 500  # maximum number of features to track 
+    quality_level: 0.01 # feature quality threshold — lower finds more 
+    min_distance: 3 # minimum distance between features
+
+  frame_labels:
+    original: "original video"
+    stabilized: "aligned video"
+
+video_dir_relative: "data"
+video_name: "shaky_video.mp4"
+output_name: "stabilized_output_frame1.mp4" 
