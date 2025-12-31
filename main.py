@@ -1,11 +1,11 @@
 import os
-
 import cv2
 import numpy as np
 import yaml
+from OF_Stablizer import OpticalFlowStabilizer
+from utils import get_video_path
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-
 
 class FrameLoader:
     def __init__(self, video_path):
@@ -14,6 +14,8 @@ class FrameLoader:
     def get_frame(self):
         return self.camera.read()
 
+    def release(self):
+        self.camera.release()
 
 def display_frames(original_frame, aligned_frame):
     cv2.putText(original_frame, f"original video", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 6)
@@ -28,12 +30,24 @@ def display_frames(original_frame, aligned_frame):
 
 
 def main():
-    config = yaml.safe_load(open(os.path.join(ROOT_DIR, "config.yml")))
-    frame_loader = FrameLoader(os.path.join(ROOT_DIR, config['video_dir_relative'], config['video_name']))
+    # Setup
+    video_path = get_video_path(ROOT_DIR)
+    if video_path is None:
+        return
+
+    frame_loader = FrameLoader(video_path)
+    stabilizer = OpticalFlowStabilizer()
 
     while True:
         ret, frame = frame_loader.get_frame()
-        display_frames(frame, frame)
+        if not ret:
+            break
+
+        aligned_frame = stabilizer.stabilize(frame)
+        display_frames(frame, aligned_frame)
+
+    frame_loader.release()
+    cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':
